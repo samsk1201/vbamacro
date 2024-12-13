@@ -1,0 +1,85 @@
+Sub SplitDataIntoMultipleFiles()
+    Dim ws As Worksheet
+    Dim originalWorkbook As Workbook
+    Dim newWorkbook As Workbook
+    Dim rowsPerFile As Long
+    Dim totalRows As Long
+    Dim numFiles As Long
+    Dim startRow As Long
+    Dim endRow As Long
+    Dim i As Long
+    Dim fileName As String
+    Dim fileExtension As String
+    Dim fileFormat As Long
+    Dim orderColumn As Integer
+    Dim lastOrderValue As Variant
+    Dim currentRow As Long
+
+    On Error GoTo ErrorHandler
+
+    Set originalWorkbook = ThisWorkbook
+    Set ws = originalWorkbook.Sheets(1)
+    orderColumn = 2
+
+    totalRows = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+
+    numFiles = InputBox("How many files do you want to create?", "Split Data", 4)
+    
+    If numFiles <= 0 Then
+        MsgBox "Invalid number of files. Please enter a number greater than 0."
+        Exit Sub
+    End If
+    
+    rowsPerFile = (totalRows - 1) \ numFiles
+    If (totalRows - 1) Mod numFiles <> 0 Then
+        rowsPerFile = rowsPerFile + 1
+    End If
+
+    If originalWorkbook.FileFormat = xlOpenXMLWorkbookMacroEnabled Then
+        fileExtension = ".xlsm"
+        fileFormat = xlOpenXMLWorkbookMacroEnabled
+    ElseIf originalWorkbook.FileFormat = xlOpenXMLWorkbook Then
+        fileExtension = ".xlsx"
+        fileFormat = xlOpenXMLWorkbook
+    Else
+        fileExtension = ".xls"
+        fileFormat = xlExcel8
+    End If
+
+    lastOrderValue = ""
+    currentRow = 2
+
+    For i = 1 To numFiles
+        Set newWorkbook = Workbooks.Add
+        newWorkbook.Sheets(1).Rows(1).Value = ws.Rows(1).Value
+
+        startRow = currentRow
+        
+        For currentRow = startRow To totalRows
+            If ws.Cells(currentRow, orderColumn).Value <> lastOrderValue And currentRow - startRow >= rowsPerFile Then
+                endRow = currentRow - 1
+                Exit For
+            End If
+            lastOrderValue = ws.Cells(currentRow, orderColumn).Value
+        Next currentRow
+
+        If currentRow > totalRows Then
+            endRow = totalRows
+        End If
+
+        ws.Rows(startRow & ":" & endRow).Copy Destination:=newWorkbook.Sheets(1).Range("A2")
+
+        fileName = originalWorkbook.Path & "\" & Left(originalWorkbook.Name, Len(originalWorkbook.Name) - 5) & "_" & i & fileExtension
+        
+        newWorkbook.SaveAs fileName, fileFormat
+        newWorkbook.Close False
+
+        currentRow = endRow + 1
+    Next i
+    
+    MsgBox "Data has been split into " & numFiles & " files.", vbInformation
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "An error occurred: " & Err.Description, vbCritical
+End Sub
