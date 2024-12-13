@@ -1,0 +1,73 @@
+Sub ConsolidateSheets()
+    Dim wsMaster As Worksheet
+    Dim ws As Worksheet
+    Dim lastRow As Long, lastCol As Long
+    Dim i As Long, j As Long
+    Dim masterRow As Long
+    Dim header As Range
+    Dim colRequestor As Long, colOrder As Long, colPDHItem As Long, colTrendPart As Long, colQty As Long, colReturnType As Long, colReturnReason As Long, colReturnDisposition As Long, colRestockEligible As Long, colText As Long
+    
+
+    On Error Resume Next
+    Set wsMaster = ActiveWorkbook.Sheets("Master")
+    On Error GoTo 0
+    If wsMaster Is Nothing Then
+        Set wsMaster = ActiveWorkbook.Sheets.Add(After:=ActiveWorkbook.Sheets(ActiveWorkbook.Sheets.Count))
+        wsMaster.Name = "Master"
+    Else
+        wsMaster.Cells.Clear
+    End If
+    wsMaster.Cells(1, 1).Value = "Requestor_Email"
+    wsMaster.Cells(1, 2).Value = "Order"
+    wsMaster.Cells(1, 3).Value = "PDHItem#"
+    wsMaster.Cells(1, 4).Value = "Trend Part#"
+    wsMaster.Cells(1, 5).Value = "Qty"
+    wsMaster.Cells(1, 6).Value = "Return Type"
+    wsMaster.Cells(1, 7).Value = "Return Reason"
+    wsMaster.Cells(1, 8).Value = "Return Disposition"
+    wsMaster.Cells(1, 9).Value = "Restock Eligible"
+    wsMaster.Cells(1, 10).Value = "Text"
+    masterRow = 2
+
+    For Each ws In ActiveWorkbook.Sheets
+        If ws.Name <> "Master" Then
+            lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+            lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+
+            Set header = ws.Rows(1)
+            On Error Resume Next
+            colRequestor = Application.Match("Requestor_Email", header, 0)
+            colOrder = Application.Match("Order", header, 0)
+            colPDHItem = Application.Match("PDHItem#", header, 0)
+            colTrendPart = Application.Match("Trend Part#", header, 0)
+            colQty = Application.Match("Qty", header, 0)
+            colReturnType = Application.Match("Return Type", header, 0)
+            colReturnReason = Application.Match("Return Reason", header, 0)
+            colReturnDisposition = Application.Match("Return Disposition", header, 0)
+            colRestockEligible = Application.Match("Restock Eligible", header, 0)
+            colText = Application.Match("Text", header, 0)
+            On Error GoTo 0
+            If colRequestor > 0 And colOrder > 0 And colPDHItem > 0 And colTrendPart > 0 And colQty > 0 And colReturnType > 0 And colReturnReason > 0 And colReturnDisposition > 0 And colRestockEligible > 0 And colText > 0 Then
+                For i = 2 To lastRow
+                    If WorksheetFunction.CountBlank(ws.Cells(i, colRequestor).Resize(1, 10)) < 3 Then
+                        wsMaster.Cells(masterRow, 1).Value = ws.Cells(i, colRequestor).Value
+                        wsMaster.Cells(masterRow, 2).Value = ws.Cells(i, colOrder).Value
+                        wsMaster.Cells(masterRow, 3).Value = ws.Cells(i, colPDHItem).Value
+                        wsMaster.Cells(masterRow, 4).Value = ws.Cells(i, colTrendPart).Value
+                        wsMaster.Cells(masterRow, 5).Value = ws.Cells(i, colQty).Value
+                        wsMaster.Cells(masterRow, 6).Value = ws.Cells(i, colReturnType).Value
+                        wsMaster.Cells(masterRow, 7).Value = ws.Cells(i, colReturnReason).Value
+                        wsMaster.Cells(masterRow, 8).Value = ws.Cells(i, colReturnDisposition).Value
+                        wsMaster.Cells(masterRow, 9).Value = ws.Cells(i, colRestockEligible).Value
+                        wsMaster.Cells(masterRow, 10).Value = ws.Cells(i, colText).Value
+                        masterRow = masterRow + 1
+                    End If
+                Next i
+            End If
+        End If
+    Next ws
+    MsgBox ActiveWorkbook.Name
+    MsgBox "Complete"
+    
+End Sub
+
